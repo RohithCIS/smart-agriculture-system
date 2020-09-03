@@ -2,11 +2,14 @@
 #![no_main]
 
 use embedded_graphics::{
+    egtext,
+    egrectangle,
     fonts::{Font6x8, Text},
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{Circle, Rectangle, Triangle},
     style::{PrimitiveStyle, TextStyle},
+    text_style,
 };
 
 use cortex_m_rt::{entry, exception, ExceptionFrame};
@@ -18,10 +21,12 @@ use stm32f1xx_hal::{
     stm32,
 };
 
+mod libraries;
+
 #[entry]
 fn main() -> ! {
     let text_style = TextStyle::new(Font6x8, BinaryColor::On);
-
+    let thick_stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 3);
     let dp = stm32::Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
@@ -57,11 +62,30 @@ fn main() -> ! {
 
     disp.init().unwrap();
 
-    let text = "Micro Controller ECE5042";
-    let width = text.len() as i32 * 6;
-    Text::new(text, Point::new(64 - width / 2, 40))
-        .into_styled(text_style)
-        .draw(&mut disp).unwrap();
+    egtext!(text = "ECE5042", top_left = (5, 5), style = text_style)
+        .draw(&mut disp)
+        .unwrap();
+
+    egtext!(
+        text = "Microcontroller",
+        top_left = (5, 15),
+        style = text_style
+    )
+    .draw(&mut disp)
+    .unwrap();
+
+    egtext!(text = "Project", top_left = (5, 25), style = text_style)
+        .draw(&mut disp)
+        .unwrap();
+
+    libraries::oled::display_text(disp, "test", 5, 45);
+
+    egrectangle!(
+        top_left = (64, 5),
+        bottom_right = (75, 15),
+        style = thick_stroke
+    )
+    .draw(&mut disp).unwrap();
 
     disp.flush().unwrap();
 
