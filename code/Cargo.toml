@@ -19,7 +19,15 @@ panic-halt = "0.2.0"
 # SENSOR LIBS
 dht-sensor = "0.1.1"
 ssd1306 = "0.4.0"
+heapless = "0.5.1"
 
 [dependencies.stm32f1xx-hal]
 version = "0.6.1"
 features = ["rt", "stm32f103", "medium"]
+
+[profile.dev.package.cortex-m-rt]
+opt-level = 0
+
+# Optimize all the other dependencies
+[profile.dev.package."*"]
+opt-level = "z"
