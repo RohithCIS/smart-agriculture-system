@@ -17,7 +17,7 @@ embedded-hal = "0.2.3"
 embedded-graphics = "0.6.2"
 panic-halt = "0.2.0"
 # SENSOR LIBS
-dht-sensor = "0.1.1"
+dht-hal-drv = "0.2.1"
 ssd1306 = "0.4.0"
 heapless = "0.5.1"
 

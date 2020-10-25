@@ -63,7 +63,7 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-semihosting",
- "dht-sensor",
+ "dht-hal-drv",
  "embedded-graphics",
  "embedded-hal",
  "heapless",
@@ -116,10 +116,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dht-sensor"
-version = "0.1.1"
+name = "dht-hal-drv"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "969ea80f9318ecc47442fb9106f45db41f8a4fb03b2041b1fe2bfd9e714a8164"
+checksum = "d979ac5756f788f0d590610940888931cd949ba7fe1620678b78be61d05da795"
 dependencies = [
  "embedded-hal",
 ]

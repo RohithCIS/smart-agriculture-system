@@ -34,6 +34,7 @@ use cortex_m_semihosting::hprintln;
 // Dependencies
 use core::fmt::Write;
 use cortex_m_rt::{entry, exception, ExceptionFrame};
+use dht_hal_drv::{dht_read, DhtType};
 use embedded_graphics::{
     fonts::{Font6x8, Text},
     pixelcolor::BinaryColor,
@@ -123,10 +124,10 @@ fn main() -> ! {
         clocks,
         // Reference to the Advanced Peripheral Bus 1, which is built into the MCU to access the different ports. In this case the I2C.
         &mut rcc.apb1,
-        1000,
-        10,
-        1000,
-        1000,
+        1000, // Connection Timeout in us
+        10,   // Max Retries
+        1000, // Address Line Timeout
+        1000, // Data Line Timeout
     );
 
     // Init the Driver Interface
@@ -138,23 +139,17 @@ fn main() -> ! {
     // Init the Display
     disp.init().unwrap();
 
-    // let mut pa4 = gpioa.pa4.into_open_drain_output(&mut gpioa.crl);
+    let mut pa4 = gpioa.pa4.into_open_drain_output(&mut gpioa.crl);
     let mut pa3 = gpioa.pa3.into_analog(&mut gpioa.crl);
-
-    // hprintln!("Waiting on the sensor...").unwrap();
-    // delay.delay_ms(3000_u16);
-
-    // let mut reading = dht11::Reading::read(&mut delay, &mut pa4).unwrap();
-    // match dht11::Reading::read(&mut delay, &mut pa4) {
-    //     Ok(dht11::Reading {
-    //         temperature,
-    //         relative_humidity,
-    //     }) => hprintln!("{}°, {}% RH", temperature, relative_humidity).unwrap(),
-    //     Err(e) => hprintln!("Error {:?}", e).unwrap()
-    // }
 
     let mut moisture_string: String<heapless::consts::U32> = String::new();
     let mut relay_string: String<heapless::consts::U32> = String::new();
+    let mut temperature_string: String<heapless::consts::U32> = String::new();
+    let mut humidity_string: String<heapless::consts::U32> = String::new();
+
+    #[cfg(debug_assertions)]
+    hprintln!("Waiting on the sensor...").unwrap();
+    delay.delay_ms(1000_u16);
 
     /*  End Program Initialization
         -------------------------------------------------------------------------------------------
@@ -166,6 +161,24 @@ fn main() -> ! {
     loop {
         moisture_string.clear();
         relay_string.clear();
+        temperature_string.clear();
+        humidity_string.clear();
+
+        let readings = dht_read(DhtType::DHT11, &mut pa4, &mut |d| delay.delay_us(d));
+
+        match readings {
+            Ok(res) => {
+                temperature_string.clear();
+                humidity_string.clear();
+                write!(temperature_string, "Temperature {}C", res.temperature()).unwrap();
+                write!(humidity_string, "Humidity {}%", res.humidity()).unwrap();
+                // hprintln!("DHT readins {}C {}%", res.temperature(), res.humidity());
+            }
+            Err(err) => {
+                write!(humidity_string, "DHT Timing Error").unwrap();
+                // hprintln!("DHT ERROR {:?}", err);
+            }
+        };
 
         // Read Analog Data from PA3 and convert to digital via ADC1 and store it
         let data: u16 = adc1.read(&mut pa3).unwrap();
@@ -193,6 +206,9 @@ fn main() -> ! {
         // Write the moisture sensor's analog value to a string to write to display
         write!(moisture_string, "Moisture Analog {}", data).unwrap();
 
+        // Wait for a second.
+        delay.delay_ms(2000u16);
+
         // Wipe Display
         disp.clear();
 
@@ -205,20 +221,17 @@ fn main() -> ! {
             .into_styled(text_style)
             .draw(&mut disp)
             .unwrap();
-        Text::new("Temperature 38°C", Point::new(5, 25))
+        Text::new(temperature_string.as_str(), Point::new(5, 25))
             .into_styled(text_style)
             .draw(&mut disp)
             .unwrap();
-        Text::new("Humidity 50%", Point::new(5, 35))
+        Text::new(humidity_string.as_str(), Point::new(5, 35))
             .into_styled(text_style)
             .draw(&mut disp)
             .unwrap();
 
         // Update the Display
         disp.flush().unwrap();
-
-        // Wait for a second.
-        delay.delay_ms(1000u16);
     }
 
     /*  End Program Loop
