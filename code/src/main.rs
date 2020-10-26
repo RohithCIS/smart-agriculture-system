@@ -146,6 +146,7 @@ fn main() -> ! {
     let mut relay_string: String<heapless::consts::U32> = String::new();
     let mut temperature_string: String<heapless::consts::U32> = String::new();
     let mut humidity_string: String<heapless::consts::U32> = String::new();
+    let mut error_string: String<heapless::consts::U32> = String::new();
 
     #[cfg(debug_assertions)]
     hprintln!("Waiting on the sensor...").unwrap();
@@ -161,8 +162,9 @@ fn main() -> ! {
     loop {
         moisture_string.clear();
         relay_string.clear();
-        temperature_string.clear();
-        humidity_string.clear();
+        error_string.clear();
+        // temperature_string.clear();
+        // humidity_string.clear();
 
         let readings = dht_read(DhtType::DHT11, &mut pa4, &mut |d| delay.delay_us(d));
 
@@ -175,7 +177,7 @@ fn main() -> ! {
                 // hprintln!("DHT readins {}C {}%", res.temperature(), res.humidity());
             }
             Err(err) => {
-                write!(humidity_string, "DHT Timing Error").unwrap();
+                write!(error_string, "DHT Timing Error").unwrap();
                 // hprintln!("DHT ERROR {:?}", err);
             }
         };
@@ -226,6 +228,10 @@ fn main() -> ! {
             .draw(&mut disp)
             .unwrap();
         Text::new(humidity_string.as_str(), Point::new(5, 35))
+            .into_styled(text_style)
+            .draw(&mut disp)
+            .unwrap();
+        Text::new(error_string.as_str(), Point::new(5, 45))
             .into_styled(text_style)
             .draw(&mut disp)
             .unwrap();
